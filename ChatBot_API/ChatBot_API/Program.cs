@@ -1,7 +1,11 @@
 using ChatBot_API.Data;
+using ChatBot_API.Services;
 using ChatBot_Shared.Clients;
+using ChatBot_Shared.LLM;
 using ChatBot_Shared.Options;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +23,11 @@ builder.Services.Configure<AppOptions>(builder.Configuration.GetSection(AppOptio
 
 builder.Services.AddHttpClient<OllamaEmbeddingClient>();
 builder.Services.AddHttpClient<PineconeVectorStore>();
+var appOptions = builder.Configuration.GetSection(AppOptions.SectionName).Get<AppOptions>() ?? new AppOptions();
+builder.Services.AddKernel().AddGoogleAIGeminiChatCompletion(appOptions.GeminiModelId, appOptions.GeminiApiKey, GoogleAIVersion.V1_Beta);
+
+builder.Services.AddSingleton<PineconeTextSearch>();
+builder.Services.AddScoped<FootballChatAgentFactory>();
 
 var app = builder.Build();
 

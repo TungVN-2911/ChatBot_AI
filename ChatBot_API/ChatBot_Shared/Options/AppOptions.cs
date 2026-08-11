@@ -8,5 +8,7 @@ namespace ChatBot_Shared.Options
         public string PineconeIndexName { get; set; } = "epl-chatbot";
         public string OllamaBaseUrl { get; set; } = "http://localhost:11434";
         public string OllamaEmbeddingModel { get; set; } = "nomic-embed-text";
+        public string GeminiApiKey { get; set; } = string.Empty;
+        public string GeminiModelId { get; set; } = "gemini-flash-latest";
     }
 }
