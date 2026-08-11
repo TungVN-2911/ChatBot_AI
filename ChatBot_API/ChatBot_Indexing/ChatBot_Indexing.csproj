@@ -14,4 +14,8 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ChatBot_Shared\ChatBot_Shared.csproj" />
+  </ItemGroup>
+
 </Project>

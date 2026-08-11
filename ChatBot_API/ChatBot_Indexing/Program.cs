@@ -2,10 +2,13 @@ using ChatBot_Indexing.Chunking;
 using ChatBot_Indexing.Clients;
 using ChatBot_Indexing.Models;
 using ChatBot_Indexing.Options;
+using ChatBot_Shared.Clients;
+using ChatBot_Shared.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Text.Json;
+using SharedAppOptions = ChatBot_Shared.Options.AppOptions;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -13,6 +16,8 @@ builder.Configuration.AddUserSecrets<Program>();
 
 builder.Services.Configure<AppOptions>(
     builder.Configuration.GetSection(AppOptions.SectionName));
+builder.Services.Configure<SharedAppOptions>(
+    builder.Configuration.GetSection(SharedAppOptions.SectionName));
 
 builder.Services.AddHttpClient<FootballDataClient>();
 builder.Services.AddHttpClient<OllamaEmbeddingClient>();
