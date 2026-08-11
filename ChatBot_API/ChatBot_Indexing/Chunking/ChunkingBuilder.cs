@@ -1,4 +1,4 @@
-﻿using ChatBot_Indexing.Models;
+using ChatBot_Indexing.Models;
 using ChatBot_Shared.Models;
 using System;
 using System.Collections.Generic;
@@ -15,11 +15,12 @@ namespace ChatBot_Indexing.Chunking
             List<Chunk> chunks = new List<Chunk>();
             foreach (Match match in matches)
             {
+                string text = $"On {match.UtcDate:yyyy-MM-dd}, {match.HomeTeam.Name} played {match.AwayTeam.Name} in {match.Stage}. " +
+                    $"Result: {match.HomeTeam.Name} {match.Score.FullTime.Home} - {match.Score.FullTime.Away} {match.AwayTeam.Name}.";
                 chunks.Add(new Chunk
                 {
                     Id = $"match-{match.Id}",
-                    Text = $"On {match.UtcDate:yyyy-MM-dd}, {match.HomeTeam.Name} played {match.AwayTeam.Name} in {match.Stage}. " +
-                    $"Result: {match.HomeTeam.Name} {match.Score.FullTime.Home} - {match.Score.FullTime.Away} {match.AwayTeam.Name}.",
+                    Text = text,
                     Metadata = new Dictionary<string, string>
                     {
                         { "Id", match.Id.ToString() },
@@ -34,7 +35,8 @@ namespace ChatBot_Indexing.Chunking
                         { "ScoreFullTimeHome", match.Score?.FullTime?.Home.ToString() ?? "" },
                         { "ScoreFullTimeAway", match.Score?.FullTime?.Away.ToString() ?? "" },
                         { "Type", "match"},
-                        { "Competition", "CL" }
+                        { "Competition", "CL" },
+                        { "Text", text }
                     }
                 });
             }
@@ -47,10 +49,11 @@ namespace ChatBot_Indexing.Chunking
             {
                 foreach (Player player in team.Squad)
                 {
+                    string text = $"{player.Name} plays for {team.Name} as a {player.Position}, nationality {player.Nationality}.";
                     chunks.Add(new Chunk
                     {
                         Id = $"player-{player.Id}",
-                        Text = $"{player.Name} plays for {team.Name} as a {player.Position}, nationality {player.Nationality}.",
+                        Text = text,
                         Metadata = new Dictionary<string, string>
                         {
                             { "Id", player.Id.ToString() },
@@ -61,7 +64,8 @@ namespace ChatBot_Indexing.Chunking
                             { "TeamId", team.Id.ToString() },
                             { "TeamName", team.Name },
                             { "Type", "player"},
-                            { "Competition", "CL" }
+                            { "Competition", "CL" },
+                            { "Text", text }
                         }
                     });
                 }
@@ -73,17 +77,19 @@ namespace ChatBot_Indexing.Chunking
             List<Chunk> chunks = new List<Chunk>();
             foreach (Team team in teams)
             {
+                string text = $"{team.Name} squad includes: {string.Join(", ", team.Squad.Select(p => p.Name))}";
                 chunks.Add(new Chunk
                 {
                     Id = $"squad-{team.Id}",
-                    Text = $"{team.Name} squad includes: {string.Join(", ", team.Squad.Select(p => p.Name))}",
+                    Text = text,
                     Metadata = new Dictionary<string, string>
                     {
                         { "TeamId", team.Id.ToString() },
                         { "TeamName", team.Name },
                         { "SquadCount", team.Squad.Count.ToString() },
                         { "Type", "squad_list"},
-                        { "Competition", "CL" }
+                        { "Competition", "CL" },
+                        { "Text", text }
                     }
                 });
             }
@@ -94,10 +100,11 @@ namespace ChatBot_Indexing.Chunking
             List<Chunk> chunks = new List<Chunk>();
             foreach (Team team in teams)
             {
+                string text = $"{team.Name} is based at {team.Venue}, founded in {team.Founded}";
                 chunks.Add(new Chunk
                 {
                     Id = $"team-{team.Id}",
-                    Text = $"{team.Name} is based at {team.Venue}, founded in {team.Founded}",
+                    Text = text,
                     Metadata = new Dictionary<string, string>
                     {
                         { "Id", team.Id.ToString() },
@@ -105,7 +112,8 @@ namespace ChatBot_Indexing.Chunking
                         { "Founded", team.Founded?.ToString() ?? "" },
                         { "Venue", team.Venue ?? "" },
                         { "Type", "team"},
-                        { "Competition", "CL" }
+                        { "Competition", "CL" },
+                        { "Text", text }
                     }
                 });
             }
