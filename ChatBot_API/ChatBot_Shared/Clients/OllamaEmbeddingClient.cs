@@ -1,14 +1,9 @@
-﻿using ChatBot_Indexing.Models;
-using ChatBot_Indexing.Options;
+using ChatBot_Shared.Models;
+using ChatBot_Shared.Options;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http.Json;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ChatBot_Indexing.Clients
+namespace ChatBot_Shared.Clients
 {
     public class OllamaEmbeddingClient
     {

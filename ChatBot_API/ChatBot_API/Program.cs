@@ -1,4 +1,6 @@
 using ChatBot_API.Data;
+using ChatBot_Shared.Clients;
+using ChatBot_Shared.Options;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,11 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.Configure<AppOptions>(builder.Configuration.GetSection(AppOptions.SectionName));
+
+builder.Services.AddHttpClient<OllamaEmbeddingClient>();
+builder.Services.AddHttpClient<PineconeVectorStore>();
 
 var app = builder.Build();
 
