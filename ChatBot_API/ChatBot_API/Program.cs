@@ -7,6 +7,8 @@ using ChatBot_Shared.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Google;
+using Neo4j.Driver;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,14 @@ builder.Services.AddKernel().AddGoogleAIGeminiChatCompletion(appOptions.GeminiMo
 builder.Services.AddSingleton<PineconeTextSearch>();
 builder.Services.AddScoped<FootballChatAgentFactory>();
 builder.Services.AddScoped<ChatHistoryService>();
+
+builder.Services.AddSingleton<IDriver>(p =>
+{
+    var options = p.GetRequiredService<IOptions<AppOptions>>().Value;
+    return GraphDatabase.Driver(options.Neo4jUri, AuthTokens.Basic(options.Neo4jUsername, options.Neo4jPassword));
+});
+
+builder.Services.AddSingleton<GraphQueryPlugin>();
 
 var app = builder.Build();
 

@@ -12,12 +12,16 @@ namespace ChatBot_API.Services
         private readonly Kernel _kernel;
         private readonly PineconeTextSearch _pineconeTextSearch;
         private readonly ILoggerFactory _loggerFactory;
+        private readonly GraphQueryPlugin _graphQueryPlugin;
 
-        public FootballChatAgentFactory(Kernel kernel, PineconeTextSearch pineconeTextSearch, ILoggerFactory loggerFactory)
+        public FootballChatAgentFactory(Kernel kernel, PineconeTextSearch pineconeTextSearch, ILoggerFactory loggerFactory, GraphQueryPlugin graphQueryPlugin)
         {
             _kernel = kernel;
             _pineconeTextSearch = pineconeTextSearch;
             _loggerFactory = loggerFactory;
+            _graphQueryPlugin = graphQueryPlugin;
+            _kernel.Plugins.AddFromObject(_graphQueryPlugin, "GraphQuery");
+
         }
         public ChatCompletionAgent CreateAgent()
         {
@@ -34,7 +38,8 @@ namespace ChatBot_API.Services
                 Kernel = _kernel,
                 Arguments = new KernelArguments(new GeminiPromptExecutionSettings
                 {
-                    Temperature = 0.1
+                    Temperature = 0.1,
+                    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
                 })
             };
             return agent;
