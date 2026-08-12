@@ -5,13 +5,44 @@ namespace ChatBot_Indexing.Chunking
 {
     public class ChunkingBuilder
     {
+        private static string DescribePosition(string? position)
+        {
+            return position switch
+            {
+                "Offence" => "an attacking player (forward, striker, or winger)",
+                "Defence" => "a defensive player (defender, centre-back, or full-back)",
+                "Midfield" => "a midfielder",
+                "Goalkeeper" => "a goalkeeper",
+                _ => "a player"
+            };
+        }
+
+        private static string DescribeResult(Match match)
+        {
+            int? home = match.Score?.FullTime?.Home;
+            int? away = match.Score?.FullTime?.Away;
+
+            if (home is null || away is null)
+            {
+                return "This match is scheduled and has not been played yet.";
+            }
+
+            string winnerClause = home > away
+                ? $"{match.HomeTeam.Name} won"
+                : away > home
+                    ? $"{match.AwayTeam.Name} won"
+                    : "the match ended in a draw";
+
+            return $"Result: {match.HomeTeam.Name} {home} - {away} {match.AwayTeam.Name} ({winnerClause}).";
+        }
+
         public static List<Chunk> BuildMatchChunks(List<Match> matches)
         {
             List<Chunk> chunks = new List<Chunk>();
             foreach (Match match in matches)
             {
-                string text = $"On {match.UtcDate:yyyy-MM-dd}, {match.HomeTeam.Name} played {match.AwayTeam.Name} in {match.Stage}. " +
-                    $"Result: {match.HomeTeam.Name} {match.Score.FullTime.Home} - {match.Score.FullTime.Away} {match.AwayTeam.Name}.";
+                string text = $"On {match.UtcDate:yyyy-MM-dd}, {match.HomeTeam.Name} played {match.AwayTeam.Name} " +
+                    $"in the UEFA Champions League ({match.Stage}). {DescribeResult(match)}";
                 chunks.Add(new Chunk
                 {
                     Id = $"match-{match.Id}",
@@ -44,7 +75,8 @@ namespace ChatBot_Indexing.Chunking
             {
                 foreach (Player player in team.Squad)
                 {
-                    string text = $"{player.Name} plays for {team.Name} as a {player.Position}, nationality {player.Nationality}.";
+                    string text = $"{player.Name} plays for {team.Name} as {DescribePosition(player.Position)} " +
+                        $"(position category: {player.Position}), nationality {player.Nationality}.";
                     chunks.Add(new Chunk
                     {
                         Id = $"player-{player.Id}",
@@ -95,7 +127,8 @@ namespace ChatBot_Indexing.Chunking
             List<Chunk> chunks = new List<Chunk>();
             foreach (Team team in teams)
             {
-                string text = $"{team.Name} is based at {team.Venue}, founded in {team.Founded}";
+                string text = $"{team.Name} is based at {team.Venue}, founded in {team.Founded}, " +
+                    "and competes in the UEFA Champions League.";
                 chunks.Add(new Chunk
                 {
                     Id = $"team-{team.Id}",

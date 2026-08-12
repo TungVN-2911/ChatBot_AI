@@ -1,3 +1,4 @@
+using ChatBot_API.Components;
 using ChatBot_API.Data;
 using ChatBot_API.Services;
 using ChatBot_Shared.Clients;
@@ -16,6 +17,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -28,6 +32,7 @@ builder.Services.AddKernel().AddGoogleAIGeminiChatCompletion(appOptions.GeminiMo
 
 builder.Services.AddSingleton<PineconeTextSearch>();
 builder.Services.AddScoped<FootballChatAgentFactory>();
+builder.Services.AddScoped<ChatHistoryService>();
 
 var app = builder.Build();
 
@@ -40,8 +45,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 app.UseAuthorization();
 
+app.UseAntiforgery();
+
 app.MapControllers();
+
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();

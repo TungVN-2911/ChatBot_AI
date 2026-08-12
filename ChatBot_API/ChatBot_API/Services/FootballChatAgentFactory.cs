@@ -1,6 +1,7 @@
 ﻿using ChatBot_Shared.Search;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Google;
 using Microsoft.SemanticKernel.Data;
 
@@ -40,9 +41,12 @@ namespace ChatBot_API.Services
         }
 
 #pragma warning disable SKEXP0110, SKEXP0130
-        public ChatHistoryAgentThread CreateThread()
+        public ChatHistoryAgentThread CreateThread(ChatHistory? existingHistory = null)
         {
-            var thread = new ChatHistoryAgentThread();
+            var thread = existingHistory is null
+                ? new ChatHistoryAgentThread()
+                : new ChatHistoryAgentThread(existingHistory, Guid.NewGuid().ToString());
+
             thread.AIContextProviders.Add(
                 new TextSearchProvider(_pineconeTextSearch, _loggerFactory, new TextSearchProviderOptions { Top = 5 }));
             return thread;

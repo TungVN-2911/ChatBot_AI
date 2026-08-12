@@ -1,0 +1,171 @@
+@page "/"
+@using ChatBot_API.Dtos
+@using ChatBot_API.Models
+@using ChatBot_API.Services
+@using Microsoft.SemanticKernel.Agents
+@using Microsoft.SemanticKernel.ChatCompletion
+@inject FootballChatAgentFactory AgentFactory
+@inject ChatHistoryService HistoryService
+@rendermode InteractiveServer
+
+<div class="app-layout">
+    <aside class="sidebar">
+        <button class="new-chat-btn" @onclick="StartNewChatAsync">+ Đoạn chat mới</button>
+        <div class="session-list">
+            @foreach (var session in _sessions)
+            {
+                <div class="session-item @(session.Id == _currentSessionId ? "active" : "")"
+                     @onclick="() => SelectSessionAsync(session.Id)">
+                    <div class="session-preview">@Truncate(session.PreviewText)</div>
+                    <div class="session-date">@session.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</div>
+                </div>
+            }
+        </div>
+    </aside>
+
+    <div class="chat-container">
+        <h1>Champions League Chatbot</h1>
+
+        <div class="chat-window">
+            @foreach (var message in _messages)
+            {
+                <div class="chat-message @(message.IsUser ? "user" : "bot")">
+                    <div class="bubble">@message.Text</div>
+                </div>
+            }
+
+            @if (_isLoading)
+            {
+                <div class="chat-message bot">
+                    <div class="bubble loading">Đang trả lời...</div>
+                </div>
+            }
+        </div>
+
+        <div class="chat-input">
+            <input @bind="_input"
+                   @bind:event="oninput"
+                   @onkeydown="OnKeyDown"
+                   placeholder="Hỏi gì đó về Champions League..."
+                   disabled="@_isLoading" />
+            <button @onclick="SendAsync" disabled="@(_isLoading || string.IsNullOrWhiteSpace(_input))">Gửi</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private record ChatBubble(string Text, bool IsUser);
+
+    private List<ChatSessionSummary> _sessions = new();
+    private readonly List<ChatBubble> _messages = new();
+    private string _input = string.Empty;
+    private bool _isLoading;
+    private Guid? _currentSessionId;
+
+    private ChatCompletionAgent? _agent;
+    private ChatHistoryAgentThread? _thread;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _agent = AgentFactory.CreateAgent();
+        _thread = AgentFactory.CreateThread();
+        _sessions = await HistoryService.GetSessionsAsync();
+    }
+
+    private static string Truncate(string text, int maxLength = 40)
+    {
+        return text.Length <= maxLength ? text : text[..maxLength] + "...";
+    }
+
+    private Task StartNewChatAsync()
+    {
+        _currentSessionId = null;
+        _messages.Clear();
+        _thread = AgentFactory.CreateThread();
+        return Task.CompletedTask;
+    }
+
+    private async Task SelectSessionAsync(Guid sessionId)
+    {
+        _currentSessionId = sessionId;
+        _messages.Clear();
+
+        var dbMessages = await HistoryService.GetMessagesAsync(sessionId);
+        var history = new ChatHistory();
+        foreach (var message in dbMessages)
+        {
+            if (message.Role == ChatRole.User)
+            {
+                history.AddUserMessage(message.Content);
+                _messages.Add(new ChatBubble(message.Content, IsUser: true));
+            }
+            else
+            {
+                history.AddAssistantMessage(message.Content);
+                _messages.Add(new ChatBubble(message.Content, IsUser: false));
+            }
+        }
+
+        _thread = AgentFactory.CreateThread(history);
+    }
+
+    private async Task OnKeyDown(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_isLoading && !string.IsNullOrWhiteSpace(_input))
+        {
+            await SendAsync();
+        }
+    }
+
+    private async Task SendAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_input) || _agent is null || _thread is null)
+        {
+            return;
+        }
+
+        var question = _input;
+        _input = string.Empty;
+        _messages.Add(new ChatBubble(question, IsUser: true));
+        _isLoading = true;
+        StateHasChanged();
+
+        if (_currentSessionId is null)
+        {
+            var session = await HistoryService.CreateSessionAsync();
+            _currentSessionId = session.Id;
+        }
+
+        await HistoryService.AddMessageAsync(_currentSessionId.Value, ChatRole.User, question);
+
+        var answerParts = new List<string>();
+        var hadError = false;
+        try
+        {
+            await foreach (var item in _agent.InvokeAsync(question, _thread))
+            {
+                if (item.Message.Content is not null)
+                {
+                    answerParts.Add(item.Message.Content);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            hadError = true;
+            answerParts.Add($"Đã có lỗi xảy ra: {ex.Message}");
+        }
+
+        var answer = string.Join(" ", answerParts);
+        _messages.Add(new ChatBubble(answer, IsUser: false));
+
+        if (!hadError)
+        {
+            await HistoryService.AddMessageAsync(_currentSessionId.Value, ChatRole.Assistant, answer);
+        }
+
+        _sessions = await HistoryService.GetSessionsAsync();
+        _isLoading = false;
+        StateHasChanged();
+    }
+}
