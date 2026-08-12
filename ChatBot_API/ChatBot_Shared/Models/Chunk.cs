@@ -8,7 +8,7 @@ namespace ChatBot_Shared.Models
     }
     public class EmbeddedChunk
     {
-        public Chunk Chunk { get; set; }
-        public float[] Vector { get; set; }
+        public Chunk Chunk { get; set; } = new Chunk();
+        public float[] Vector { get; set; } = Array.Empty<float>();
     }
 }

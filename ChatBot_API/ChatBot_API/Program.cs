@@ -1,7 +1,7 @@
 using ChatBot_API.Data;
 using ChatBot_API.Services;
 using ChatBot_Shared.Clients;
-using ChatBot_Shared.LLM;
+using ChatBot_Shared.Search;
 using ChatBot_Shared.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;

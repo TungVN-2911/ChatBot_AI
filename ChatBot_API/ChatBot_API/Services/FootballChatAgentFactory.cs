@@ -1,6 +1,7 @@
-﻿using ChatBot_Shared.LLM;
+﻿using ChatBot_Shared.Search;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
+using Microsoft.SemanticKernel.Connectors.Google;
 using Microsoft.SemanticKernel.Data;
 
 namespace ChatBot_API.Services
@@ -22,10 +23,18 @@ namespace ChatBot_API.Services
             var agent = new ChatCompletionAgent
             {
                 Name = "ChampionLeagueAssistant",
-                Instructions = "You are a helpful assistant that answers questions about " +
-                    "Champions League football using the provided context. " +
-                    "If the context does not contain the answer, say you don't know instead of guessing.",
-                Kernel = _kernel
+                Instructions = "You are a football assistant that answers ONLY using the context provided below. " +
+                               "Follow these rules strictly:\n" +
+                               "1. Base your answer ONLY on the given context. Never use outside knowledge, even if you know the answer.\n" +
+                               "2. If the context is empty or does not contain enough information to answer confidently, " +
+                               "respond exactly: \"I don't have enough information to answer that.\"\n" +
+                               "3. Never guess, speculate, or make up names, scores, or dates.\n" +
+                               "4. If the question is unrelated to Premier League or Champions League football, decline politely.",
+                Kernel = _kernel,
+                Arguments = new KernelArguments(new GeminiPromptExecutionSettings
+                {
+                    Temperature = 0.1
+                })
             };
             return agent;
         }

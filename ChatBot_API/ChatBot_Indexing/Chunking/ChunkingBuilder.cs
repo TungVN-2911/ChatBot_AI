@@ -1,10 +1,5 @@
 using ChatBot_Indexing.Models;
 using ChatBot_Shared.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChatBot_Indexing.Chunking
 {
