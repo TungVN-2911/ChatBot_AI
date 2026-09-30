@@ -44,7 +44,6 @@ namespace ChatBot_Indexing.Graph
 
             foreach (var match in matches)
             {
-                // Tạo Match node
                 await session.RunAsync(
                     "MERGE (m:Match {id: $id}) SET m.date = $date, m.stage = $stage, " +
                     "m.homeScore = $homeScore, m.awayScore = $awayScore",
@@ -57,13 +56,11 @@ namespace ChatBot_Indexing.Graph
                         awayScore = match.Score?.FullTime?.Away
                     });
 
-                // Relationship: đội nhà -> trận
                 await session.RunAsync(
                     "MATCH (t:Team {id: $teamId}), (m:Match {id: $matchId}) " +
                     "MERGE (t)-[:PLAYED_HOME]->(m)",
                     new { teamId = match.HomeTeam.Id, matchId = match.Id });
 
-                // Relationship: đội khách -> trận
                 await session.RunAsync(
                     "MATCH (t:Team {id: $teamId}), (m:Match {id: $matchId}) " +
                     "MERGE (t)-[:PLAYED_AWAY]->(m)",

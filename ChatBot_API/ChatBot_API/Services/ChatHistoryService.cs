@@ -65,5 +65,15 @@ namespace ChatBot_API.Services
             _db.ChatMessages.Add(message);
             await _db.SaveChangesAsync();
         }
+
+        public async Task DeleteSessionAsync(Guid sessionId)
+        {
+            var session = await _db.ChatSessions.FindAsync(sessionId);
+            if (session is not null)
+            {
+                _db.ChatSessions.Remove(session);
+                await _db.SaveChangesAsync();
+            }
+        }
     }
 }
