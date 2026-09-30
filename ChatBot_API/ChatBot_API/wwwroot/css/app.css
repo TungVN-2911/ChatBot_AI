@@ -45,10 +45,21 @@ body {
     gap: 4px;
 }
 
+.sidebar-empty {
+    font-size: 0.85rem;
+    color: #7c8896;
+    padding: 10px 12px;
+}
+
 .session-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     padding: 10px 12px;
     border-radius: 8px;
     cursor: pointer;
+    transition: background 0.15s ease;
 }
 
 .session-item:hover {
@@ -57,6 +68,11 @@ body {
 
 .session-item.active {
     background: #3b82f6;
+}
+
+.session-item-text {
+    min-width: 0;
+    flex: 1;
 }
 
 .session-preview {
@@ -70,6 +86,32 @@ body {
     font-size: 0.75rem;
     color: #9aa5b1;
     margin-top: 2px;
+}
+
+.delete-btn {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    line-height: 20px;
+    text-align: center;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #9aa5b1;
+    font-size: 1.1rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.session-item:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ff6b6b;
 }
 
 .chat-container {
@@ -100,6 +142,14 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    scroll-behavior: smooth;
+}
+
+.chat-empty {
+    margin: auto;
+    color: #9aa5b1;
+    font-size: 0.95rem;
+    text-align: center;
 }
 
 .chat-message {

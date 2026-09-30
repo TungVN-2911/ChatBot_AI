@@ -6,27 +6,48 @@
 @using Microsoft.SemanticKernel.ChatCompletion
 @inject FootballChatAgentFactory AgentFactory
 @inject ChatHistoryService HistoryService
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <div class="app-layout">
     <aside class="sidebar">
         <button class="new-chat-btn" @onclick="StartNewChatAsync">+ Đoạn chat mới</button>
-        <div class="session-list">
-            @foreach (var session in _sessions)
-            {
-                <div class="session-item @(session.Id == _currentSessionId ? "active" : "")"
-                     @onclick="() => SelectSessionAsync(session.Id)">
-                    <div class="session-preview">@Truncate(session.PreviewText)</div>
-                    <div class="session-date">@session.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</div>
-                </div>
-            }
-        </div>
+
+        @if (_sessions.Count == 0)
+        {
+            <div class="sidebar-empty">Chưa có đoạn chat nào</div>
+        }
+        else
+        {
+            <div class="session-list">
+                @foreach (var session in _sessions)
+                {
+                    <div class="session-item @(session.Id == _currentSessionId ? "active" : "")"
+                         @onclick="() => SelectSessionAsync(session.Id)">
+                        <div class="session-item-text">
+                            <div class="session-preview">@Truncate(session.PreviewText)</div>
+                            <div class="session-date">@session.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</div>
+                        </div>
+                        <button class="delete-btn" title="Xoá đoạn chat"
+                                @onclick="() => DeleteSessionAsync(session.Id)"
+                                @onclick:stopPropagation="true">
+                            &times;
+                        </button>
+                    </div>
+                }
+            </div>
+        }
     </aside>
 
     <div class="chat-container">
         <h1>Champions League Chatbot</h1>
 
-        <div class="chat-window">
+        <div class="chat-window" id="chat-window">
+            @if (_messages.Count == 0)
+            {
+                <div class="chat-empty">Hỏi gì đó về Premier League / Champions League để bắt đầu.</div>
+            }
+
             @foreach (var message in _messages)
             {
                 <div class="chat-message @(message.IsUser ? "user" : "bot")">
@@ -61,6 +82,7 @@
     private string _input = string.Empty;
     private bool _isLoading;
     private Guid? _currentSessionId;
+    private bool _shouldScroll;
 
     private ChatCompletionAgent? _agent;
     private ChatHistoryAgentThread? _thread;
@@ -70,6 +92,15 @@
         _agent = AgentFactory.CreateAgent();
         _thread = AgentFactory.CreateThread();
         _sessions = await HistoryService.GetSessionsAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_shouldScroll)
+        {
+            _shouldScroll = false;
+            await JS.InvokeVoidAsync("scrollToBottom", "#chat-window");
+        }
     }
 
     private static string Truncate(string text, int maxLength = 40)
@@ -107,6 +138,26 @@
         }
 
         _thread = AgentFactory.CreateThread(history);
+        _shouldScroll = true;
+    }
+
+    private async Task DeleteSessionAsync(Guid sessionId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Xoá đoạn chat này? Không thể hoàn tác.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await HistoryService.DeleteSessionAsync(sessionId);
+        _sessions = await HistoryService.GetSessionsAsync();
+
+        if (_currentSessionId == sessionId)
+        {
+            _currentSessionId = null;
+            _messages.Clear();
+            _thread = AgentFactory.CreateThread();
+        }
     }
 
     private async Task OnKeyDown(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
@@ -128,6 +179,7 @@
         _input = string.Empty;
         _messages.Add(new ChatBubble(question, IsUser: true));
         _isLoading = true;
+        _shouldScroll = true;
         StateHasChanged();
 
         if (_currentSessionId is null)
@@ -166,6 +218,7 @@
 
         _sessions = await HistoryService.GetSessionsAsync();
         _isLoading = false;
+        _shouldScroll = true;
         StateHasChanged();
     }
 }
